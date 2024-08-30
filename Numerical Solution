@@ -4,20 +4,25 @@ import matplotlib.pyplot as plt
 # Parámetros del sistema
 m1 = 1.0  # masa 1 (kg)
 m2 = 1.0  # masa 2 (kg)
-l1 = 1.0   # longitud del péndulo 1 (m)
-l2 = 1.0   # longitud del péndulo 2 (m)
+l1 = 1.0  # longitud del péndulo 1 (m)
+l2 = 1.0  # longitud del péndulo 2 (m)
 g = 9.81  # aceleración debido a la gravedad (m/s^2)
 k = 1.0   # constante de acoplamiento (N/m)
+dix = 0.5  # distancia en x entre las dos masas (m)
 
 # Condiciones iniciales (en grados)
 theta1_0 = 10  # ángulo inicial de theta1 (grados)
 theta2_0 = 15  # ángulo inicial de theta2 (grados)
-omega1_0 = 0.0  # velocidad angular inicial de theta1 (grados/s)
-omega2_0 = 0.0  # velocidad angular inicial de theta2 (grados/s)
+omega1_0 = 0.0  # velocidad angular inicial de theta1 (rad/s)
+omega2_0 = 0.0  # velocidad angular inicial de theta2 (rad/s)
+
+# Convertir condiciones iniciales de grados a radianes
+theta1_0_rad = np.deg2rad(theta1_0)
+theta2_0_rad = np.deg2rad(theta2_0)
 
 # Intervalo de tiempo
 t0 = 0.0  # tiempo inicial
-tf = 100.0  # tiempo final
+tf = 100.0  # tiempo final (ajustado para evitar acumulación de errores numéricos)
 dt = 0.001  # paso de tiempo
 
 # Número de pasos
@@ -31,18 +36,14 @@ def dtheta2_dt(omega2):
     return omega2
 
 def domega1_dt(theta1, theta2):
-    term1 = - (g * np.sin(theta1)) / l1
-    term2 = (k * (l2 * np.sin(theta2) - l1 * np.sin(theta1)) * np.cos(theta1)) / (m1 * l1)
+    term1 = -(g * np.sin(theta1)) / l1
+    term2 = k * (dix * np.cos(theta1) + l2 * np.sin(theta1 - theta2)) / (m1 * l1)
     return term1 + term2
 
 def domega2_dt(theta1, theta2):
-    term1 = - (g * np.sin(theta2)) / l2
-    term2 = - (k * (l2 * np.sin(theta2) - l1 * np.sin(theta1)) * np.cos(theta2)) / (m2 * l2)
+    term1 = -(g * np.sin(theta2)) / l2
+    term2 = -k * (dix * np.cos(theta2) + l1 * np.sin(theta1 - theta2)) / (m2 * l2)
     return term1 + term2
-
-# Convertir condiciones iniciales de grados a radianes
-theta1_0_rad = np.deg2rad(theta1_0)
-theta2_0_rad = np.deg2rad(theta2_0)
 
 # Arrays para almacenar soluciones
 t = np.linspace(t0, tf, n_steps)
@@ -112,6 +113,10 @@ plt.xlabel('Tiempo [s]')
 plt.ylabel(r'Ángulo $\theta_2$ [grados]')
 plt.title(r'$\theta_2(t)$ vs Tiempo')
 plt.grid(True)
+
+plt.tight_layout()
+plt.show()
+
 
 plt.tight_layout()
 plt.show()
