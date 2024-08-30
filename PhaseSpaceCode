@@ -8,14 +8,15 @@ l1 = 1.0  # longitud del péndulo 1 (m)
 l2 = 1.0  # longitud del péndulo 2 (m)
 g = 9.81  # aceleración debido a la gravedad (m/s^2)
 k = 2.0   # constante de acoplamiento (N/m)
+dix = 2  # distancia en x entre las dos masas (m)
 
 # Condiciones iniciales (en grados)
 theta1_0 = 30  # ángulo inicial de theta1 (grados)
-omega1_0 = 4  # velocidad angular inicial de theta1 (grados/s)
-omega2_0 = 3 # velocidad angular inicial de theta2 (grados/s)
+omega1_0 = 3.5  # velocidad angular inicial de theta1 (grados/s)
+omega2_0 = 3.5 # velocidad angular inicial de theta2 (grados/s)
 
 # Proporcionar manualmente los valores de theta2
-theta2_values = [31, 32, 33]  # ángulos iniciales de theta2 (grados)
+theta2_values = [28, 27, 26]  # ángulos iniciales de theta2 (grados)
 
 # Intervalo de tiempo
 t0 = 0.0  # tiempo inicial
@@ -33,10 +34,10 @@ def dtheta2_dt(omega2):
     return omega2
 
 def domega1_dt(theta1, theta2):
-    return - (g * np.sin(theta1) / l1) + (k * (l2 * np.sin(theta2) - l1 * np.sin(theta1)) * np.cos(theta1) / (m1 * l1))
+    return -(g * np.sin(theta1)) / l1 + (k * (dix * np.cos(theta1) + l2 * np.sin(theta1 - theta2))) / (m1 * l1)
 
 def domega2_dt(theta1, theta2):
-    return - (g * np.sin(theta2) / l2) - (k * (l2 * np.sin(theta2) - l1 * np.sin(theta1)) * np.cos(theta2) / (m2 * l2))
+    return -(g * np.sin(theta2)) / l2 - (k * (dix * np.cos(theta2) + l1 * np.sin(theta1 - theta2))) / (m2 * l2)
 
 # Crear las gráficas para cada valor de theta2
 for theta2_0 in theta2_values:
@@ -109,3 +110,4 @@ for theta2_0 in theta2_values:
 
     plt.tight_layout()
     plt.show()
+
