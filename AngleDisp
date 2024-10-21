@@ -1,0 +1,34 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Constantes
+k = 1.0  # Constante de Coulomb (ajusta según sea necesario)
+
+# Función para calcular el ángulo de dispersión
+def angulo_dispersion(E, b, alpha):
+    # Aproximación del ángulo de dispersión con apantallamiento
+    theta = (2 * k) / (E * b) * (1 - (alpha * b) / 2)
+    return theta
+
+# Valores de energía (E), parámetro de impacto (b) y apantallamiento (alpha)
+E_vals = np.linspace(1, 10, 100)  # Energías de 1 a 10 unidades
+b_vals = [0.5, 1.0, 1.5]  # Parámetros de impacto
+alpha_vals = [0.0, 0.5, 1.0, 1.5]  # Parámetros de apantallamiento
+
+# Graficar el ángulo de dispersión para diferentes valores de b y alpha
+plt.figure(figsize=(10, 6))
+
+for alpha in alpha_vals:
+    for b in b_vals:
+        theta_vals = angulo_dispersion(E_vals, b, alpha)
+        plt.plot(E_vals, theta_vals, label=f'b = {b}, alpha = {alpha}')
+
+# Configuración del gráfico
+plt.xlabel('Energía (E)')
+plt.ylabel('Ángulo de dispersión (θ)')
+plt.title('Ángulo de dispersión vs Energía para diferentes valores de b y alpha')
+plt.legend()
+plt.grid(True)
+
+# Mostrar el gráfico
+plt.show()
