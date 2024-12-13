@@ -1,0 +1,116 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
+# Parámetros de la simulación
+Lx, Ly = 200e3, 200e3  # Tamaño del dominio en metros
+Nx, Ny = 400, 400      # Resolución espacial
+dx, dy = Lx / Nx, Ly / Ny  # Resolución espacial
+dt = 2             # Paso de tiempo en segundos
+T = 1800               # Tiempo total de simulación en segundos
+g = 9.81               # Aceleración de la gravedad
+alpha = 0.005          # Coeficiente de amortiguación para la capa de amortiguación
+
+# Calcular el número total de frames necesarios
+num_frames = int(T / dt)
+
+# Crear malla espacial
+x = np.linspace(0, Lx, Nx)
+y = np.linspace(0, Ly, Ny)
+X, Y = np.meshgrid(x, y)
+
+# Crear batimetría realista: combinación de pendientes, montañas y ruido
+H = 4000 - (X / Lx) * 4000  # Pendiente hacia la costa
+H += 500 * np.sin(2 * np.pi * X / Lx) * np.cos(2 * np.pi * Y / Ly)  # Montañas submarinas
+H += 300 * np.random.uniform(-1, 1, size=(Nx, Ny))  # Variaciones aleatorias
+H[H < 0] = 0  # Evitar profundidades negativas (tierra)
+
+# Condición inicial: Perturbación gaussiana
+A = 5.0  # Amplitud inicial de la ola (m)
+sigma = 10e3  # Tamaño de la perturbación inicial
+eta = A * np.exp(-((X - Lx/4)**2 + (Y - Ly/2)**2) / (2 * sigma**2))  # Perturbación inicial
+
+# Inicializar variables de velocidad
+u = np.zeros((Nx, Ny))  # Velocidad en x
+v = np.zeros((Nx, Ny))  # Velocidad en y
+
+# Crear máscara de amortiguación
+def create_damping_layer(Nx, Ny, width, alpha):
+    damping_layer = np.ones((Nx, Ny))
+    for i in range(width):
+        factor = np.exp(-alpha * (width - i))
+        damping_layer[i, :] *= factor  # Amortiguar la frontera superior
+        damping_layer[-i-1, :] *= factor  # Amortiguar la frontera inferior
+        damping_layer[:, i] *= factor  # Amortiguar la frontera izquierda
+        damping_layer[:, -i-1] *= factor  # Amortiguar la frontera derecha
+    return damping_layer
+
+# Parámetros de la capa de amortiguación
+damping_width = 40  # Número de celdas en la capa de amortiguación
+damping_layer = create_damping_layer(Nx, Ny, damping_width, alpha)
+
+# Función para calcular derivadas explícitas usando diferencias finitas
+def compute_gradients_explicit(f, dx, dy):
+    # Derivada parcial en x
+    df_dx = np.zeros_like(f)
+    df_dx[1:-1, :] = (f[2:, :] - f[:-2, :]) / (2 * dx)
+
+    # Derivada parcial en y
+    df_dy = np.zeros_like(f)
+    df_dy[:, 1:-1] = (f[:, 2:] - f[:, :-2]) / (2 * dy)
+
+    return df_dx, df_dy
+
+# Configurar figura para animación
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Función para actualizar la simulación
+def update(frame):
+    global eta, u, v
+
+    # Gradientes espaciales de eta y H (diferencias finitas explícitas)
+    eta_x, eta_y = compute_gradients_explicit(eta, dx, dy)
+    H_x, H_y = compute_gradients_explicit(H, dx, dy)
+
+    # Actualizar velocidades (ecuaciones de aguas poco profundas)
+    u_new = u - g * dt * eta_x
+    v_new = v - g * dt * eta_y
+
+    # Gradientes de flujo (u * H y v * H)
+    uH_x, _ = compute_gradients_explicit(u_new * H, dx, dy)
+    _, vH_y = compute_gradients_explicit(v_new * H, dx, dy)
+
+    # Actualizar eta
+    eta_new = eta - dt * (uH_x + vH_y)
+
+    # Aplicar capa de amortiguación
+    eta_new *= damping_layer
+    u_new *= damping_layer
+    v_new *= damping_layer
+
+    # Actualizar variables globales
+    eta[:] = eta_new
+    u[:] = u_new
+    v[:] = v_new
+
+    # Actualizar gráfico
+    ax.clear()
+
+    # Mostrar batimetría en el fondo
+    ax.contourf(X / 1000, Y / 1000, -H, levels=50, cmap='terrain', alpha=0.6, extend='both')
+    
+    # Mostrar altura de la ola superpuesta
+    cont = ax.contourf(X / 1000, Y / 1000, eta, levels=100, cmap='viridis', extend='both')
+    ax.contour(X / 1000, Y / 1000, -H, levels=[0], colors='black', linewidths=2)  # Línea de costa
+    ax.set_title(f"Simulación de Tsunami con Relieve - Tiempo: {frame * dt:.1f} s")
+    ax.set_xlabel("Distancia X (km)")
+    ax.set_ylabel("Distancia Y (km)")
+    ax.set_xlim(0, Lx / 1000)
+    ax.set_ylim(0, Ly / 1000)
+    return cont
+
+# Crear animación en tiempo real
+ani = animation.FuncAnimation(fig, update, frames=num_frames, interval=1000 / 60, repeat=False)  # 60 FPS
+
+# Mostrar animación en tiempo real
+plt.show()
