@@ -1,0 +1,45 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Definir las frecuencias en Hz
+frecuencias = np.array([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 65, 70, 75, 80])
+
+# Función para calcular la impedancia en forma trigonométrica y polar
+def calcular_impedancia(f):
+    num_real = 150
+    num_imag = -300 * np.pi * f * 10**-5
+    den = 1 + 4 * np.pi**2 * f**2 * 10**-10
+    
+    parte_real = 100 + num_real / den
+    parte_imag = num_imag / den
+    
+    # Forma trigonométrica: Z = a + jb
+    trigonometrica = f"{parte_real:.5f} + {parte_imag:.5f}j"
+    
+    # Forma polar: Z = |Z| * exp(jθ)
+    modulo = np.sqrt(parte_real**2 + parte_imag**2)
+    fase = np.arctan2(parte_imag, parte_real)  # En radianes
+    polar = f"{modulo:.5f} ∠ {np.degrees(fase):.5f}°"
+    
+    return trigonometrica, polar, modulo, np.degrees(fase)
+
+# Crear DataFrame para almacenar resultados
+datos = {"Frecuencia (Hz)": [], "Trigonométrica (a + jb)": [], "Polar (|Z| ∠ θ)": [], "Módulo (Ω)": [], "Fase (°)": []}
+
+for f in frecuencias:
+    Z_trig, Z_polar, Z_mod, Z_fase = calcular_impedancia(f)
+    datos["Frecuencia (Hz)"].append(f)
+    datos["Trigonométrica (a + jb)"].append(Z_trig)
+    datos["Polar (|Z| ∠ θ)"].append(Z_polar)
+    datos["Módulo (Ω)"].append(Z_mod)
+    datos["Fase (°)"].append(Z_fase)
+
+# Crear DataFrame
+df = pd.DataFrame(datos)
+
+# Guardar en un archivo Excel
+nombre_archivo = "Impedancia.xlsx"
+df.to_excel(nombre_archivo, index=False)
+print(f"Tabla guardada en '{nombre_archivo}'.")
+
