@@ -1,0 +1,61 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Definir las frecuencias en Hz
+frecuencias = np.array([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 65, 70, 75, 80])
+
+# Función para calcular la impedancia en forma polar
+def calcular_impedancia_polar(f):
+    num_real = 150
+    num_imag = -300 * np.pi * f * 10**-5
+    den = 1 + 4 * np.pi**2 * f**2 * 10**-10
+
+    parte_real = 100 + num_real / den
+    parte_imag = num_imag / den
+
+    # Módulo (casi constante) y fase (cambia con f)
+    modulo = np.sqrt(parte_real**2 + parte_imag**2)
+    fase = np.arctan2(parte_imag, parte_real)  # En radianes
+
+    return modulo, np.degrees(fase)  # Convertimos la fase a grados
+
+# Crear DataFrame para almacenar resultados
+datos = {"Frecuencia (Hz)": [], "Impedancia (Ω) Módulo": [], "Impedancia (°) Fase": []}
+
+for f in frecuencias:
+    Z_mod, Z_fase = calcular_impedancia_polar(f)
+    datos["Frecuencia (Hz)"].append(f)
+    datos["Impedancia (Ω) Módulo"].append(Z_mod)
+    datos["Impedancia (°) Fase"].append(Z_fase)
+
+df = pd.DataFrame(datos)
+
+# Guardar en un archivo Excel
+nombre_archivo = "Impedancia.xlsx"
+df.to_excel(nombre_archivo, index=False)
+print(f"Tabla guardada en '{nombre_archivo}'.")
+
+# Graficar los resultados
+fig, axs = plt.subplots(2, 1, figsize=(8, 8), dpi=120)
+
+# Gráfico 1: Módulo de la impedancia
+axs[0].plot(df["Frecuencia (Hz)"], df["Impedancia (Ω) Módulo"], 'o-', color='tab:red')
+axs[0].set_xlabel("Frecuencia (Hz)")
+axs[0].set_ylabel("Módulo de la Impedancia (Ω)")
+axs[0].set_title("Módulo de la Impedancia vs Frecuencia")
+axs[0].grid(True)
+
+# Gráfico 2: Fase de la impedancia
+axs[1].plot(df["Frecuencia (Hz)"], df["Impedancia (°) Fase"], 'o-', color='tab:blue')
+axs[1].set_xlabel("Frecuencia (Hz)")
+axs[1].set_ylabel("Fase de la Impedancia (°)")
+axs[1].set_title("Fase de la Impedancia vs Frecuencia")
+axs[1].grid(True)
+
+plt.savefig("Impedancia.jpg", format="jpeg", dpi=300)
+
+
+# Ajustar diseño y mostrar
+plt.tight_layout()
+plt.show()
