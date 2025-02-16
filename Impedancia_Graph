@@ -1,0 +1,72 @@
+import numpy as np 
+import matplotlib.pyplot as plt 
+
+f = 10**np.random.uniform(low=3, high=6)
+def impedance(f):
+    return 100 + 150/(1 + 2j*np.pi*f*10e-6)
+
+Z = impedance(f)
+phi = np.angle(Z)
+Z_abs = np.abs(Z)
+w = 2*np.pi*f
+t_phi = 1e6*np.abs(phi/w)
+t = np.linspace(0, 1/f, 1000)
+Io = 0.1 # A 
+i = Io * np.sin(w*t)
+v = Z_abs*Io*np.sin(w*t + phi)
+
+fig, ax1 = plt.subplots(dpi=120)
+color = 'tab:red'
+ax1.set_xlabel(r'Tiempo $[\mu s]$')
+ax1.set_ylabel('Corriente [A]', color=color)
+ax1.plot(1e6*t, i, color=color)
+ax1.plot([0, t_phi], 2*[0], '+-k')
+ax1.tick_params(axis='y', labelcolor=color)
+ax2 = ax1.twinx()
+color = 'tab:blue'
+ax2.set_ylabel('Voltaje [V]', color=color)
+ax2.plot(1e6*t, v, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+ax = plt.axis()
+plt.axis([min(1e6*t), max(1e6*t), ax[2], ax[3]])
+plt.title(r'$f=%0.2f$ $[k Hz]$, $t_{\phi}=%0.3f$ [$\mu s$]' % (1e-3*f, t_phi))
+fig.tight_layout()
+
+
+
+f = np.logspace(2, 6, 1000)
+Z = impedance(f)
+
+fig, ax1 = plt.subplots(dpi=120)
+color = 'tab:red'
+ax1.set_xlabel(r'Frecuencia $[Hz]$')
+ax1.set_ylabel('|Z| [$\Omega$]', color=color)
+ax1.semilogx(f, np.abs(Z), color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+ax2 = ax1.twinx()
+color = 'tab:blue'
+ax2.set_ylabel('$\phi$ [$^o$]', color=color)
+ax2.semilogx(f, 180*np.angle(Z)/np.pi, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+ax = plt.axis()
+_ = plt.axis([min(f), max(f), ax[2], ax[3]])
+fig.tight_layout()
+
+fig, ax1 = plt.subplots(dpi=120)
+color = 'tab:red'
+ax1.set_xlabel(r'Frecuencia $[Hz]$')
+ax1.set_ylabel(r'real{Z} [$\Omega$]', color=color)
+ax1.semilogx(f, Z.real, color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+ax2 = ax1.twinx()
+color = 'tab:blue'
+ax2.set_ylabel(r'- imag{Z} [$\Omega$]', color=color)
+ax2.semilogx(f, -Z.imag, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+ax = plt.axis()
+_ = plt.axis([min(f), max(f), ax[2], ax[3]])
+fig.tight_layout()
+
+plt.show()
+
+
