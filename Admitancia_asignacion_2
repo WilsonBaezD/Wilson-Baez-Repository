@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros del modelo de Debye
+epsilon_s = 100e-6  # F/m^2
+epsilon_i = 10e-6   # F/m^2
+tau = 1e-4 / (2 * np.pi)  # s
+f = np.logspace(1, 7, 1000)  # Frecuencia en Hz
+w = 2 * np.pi * f
+
+# Permitividad compleja
+epsilon = epsilon_i + (epsilon_s - epsilon_i) / (1 + 1j * w * tau)
+
+# Suposiciones para la capacitancia
+A = 1e-4  # Área de placas en m^2
+d = 1e-3  # Distancia entre placas en m
+
+# Admitancia compleja
+Y = 1j * w * epsilon * (A / d)
+
+# Gráficos de la admitancia compleja
+def plot_bode(f, y1, y2, y1_label, y2_label, fig):
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('Frecuencia [Hz]')
+    ax1.set_ylabel(y1_label, color='tab:red')
+    ax1.semilogx(f, y1, color='tab:red')
+    ax1.tick_params(axis='y', labelcolor='tab:red')
+    
+    ax2 = ax1.twinx()
+    ax2.set_ylabel(y2_label, color='tab:blue')
+    ax2.semilogx(f, y2, color='tab:blue')
+    ax2.tick_params(axis='y', labelcolor='tab:blue')
+    plt.title(f'Figura {fig}')
+    plt.show()
+
+# Parte real e imaginaria de la admitancia
+plot_bode(f, Y.real * 1e6, Y.imag * 1e6, 
+          y1_label=r'real{$Y$} $[\mu S]$',
+          y2_label=r'imag{$Y$} $[\mu S]$', fig=1)
+
+# Magnitud y fase de la admitancia
+plot_bode(f, np.abs(Y) * 1e6, -180/np.pi * np.angle(Y), 
+          y1_label=r'$|Y|$ $[\mu S]$',
+          y2_label=r'$-\frac{180}{\pi} \arg(Y)$', fig=2)
+
+# Diagrama de Nyquist para admitancia
+plt.figure()
+plt.plot(Y.real * 1e6, Y.imag * 1e6)
+plt.xlabel(r'real{$Y$} $[\mu S]$')
+plt.ylabel(r'imag{$Y$} $[\mu S]$')
+plt.title('Figura 3')
+plt.axis('equal')
+plt.show()
