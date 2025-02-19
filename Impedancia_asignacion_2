@@ -1,0 +1,56 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros del modelo de Debye
+epsilon_s = 100e-6  # F/m^2
+epsilon_i = 10e-6   # F/m^2
+tau = 1e-4 / (2 * np.pi)  # s
+f = np.logspace(1, 7, 1000)  # Frecuencia en Hz
+w = 2 * np.pi * f
+
+# Permisividad compleja
+epsilon = epsilon_i + (epsilon_s - epsilon_i) / (1 + 1j * w * tau)
+
+# Suposiciones para la capacitancia
+A = 1e-4  # Área de placas en m^2
+d = 1e-3  # Distancia entre placas en m
+
+# Capacitancia compleja
+C = epsilon * (A / d)
+
+# Impedancia compleja
+Z = 1 / (1j * w * C)
+
+# Gráficos de la impedancia compleja
+def plot_bode(f, y1, y2, y1_label, y2_label, fig):
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('Frecuencia [Hz]')
+    ax1.set_ylabel(y1_label, color='tab:red')
+    ax1.semilogx(f, y1, color='tab:red')
+    ax1.tick_params(axis='y', labelcolor='tab:red')
+    
+    ax2 = ax1.twinx()
+    ax2.set_ylabel(y2_label, color='tab:blue')
+    ax2.semilogx(f, y2, color='tab:blue')
+    ax2.tick_params(axis='y', labelcolor='tab:blue')
+    plt.title(f'Figura {fig}')
+    plt.show()
+
+# Parte real e imaginaria de la impedancia
+plot_bode(f, Z.real, Z.imag, 
+          y1_label=r'real{$Z$} [$\Omega$]',
+          y2_label=r'imag{$Z$} [$\Omega$]', fig=1)
+
+# Magnitud y fase de la impedancia
+plot_bode(f, np.abs(Z), -180/np.pi * np.angle(Z), 
+          y1_label=r'$|Z|$ [$\Omega$]',
+          y2_label=r'$-\frac{180}{\pi} \arg(Z)$', fig=2)
+
+# Diagrama de Nyquist para impedancia
+plt.figure()
+plt.plot(Z.real, Z.imag)
+plt.xlabel(r'real{$Z$} [$\Omega$]')
+plt.ylabel(r'imag{$Z$} [$\Omega$]')
+plt.title('Figura 3')
+plt.axis('equal')
+plt.show()
