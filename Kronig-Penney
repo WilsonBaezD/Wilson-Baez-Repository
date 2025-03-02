@@ -1,0 +1,84 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Parámetros del modelo
+E0 = 10  # Parámetro presente en la función trascendental
+V0 = 225  # Potencial de barrera en MeV
+a = 2  # Ancho de la barrera
+r = 0.5  # Relación b/a
+b = r * a  # Definir b a partir de la relación r = b/a
+
+# Definir la función trascendental en términos de epsilon
+def funcion_trascendente(eps):
+    if eps <= 0 or eps >= 1:  # Evitar problemas en los extremos
+        return np.nan
+    num = (1 - 2 * eps)
+    denom = 2 * np.sqrt(E0 * (1 - eps))
+    term1 = num / denom
+    term2 = np.sin(np.sqrt(E0 * eps) * a)
+    term3 = np.sinh(r * np.sqrt(E0 * (1 - eps)) * a)
+    term4 = np.cos(np.sqrt(E0 * eps) * a)
+    term5 = np.cosh(r * np.sqrt(E0 * (1 - eps)) * a)
+    return term1 * term2 * term3 + term4 * term5
+
+# Rango de valores para epsilon
+eps_values = np.linspace(0.001, 0.999, 100000)  # Se evita el 0 y el 1 para prevenir errores numéricos
+y = [funcion_trascendente(eps) for eps in eps_values]
+
+# Encontrar los puntos donde la función cruza ±1 (límites de bandas permitidas)
+puntos_de_corte = []
+for i in range(len(y) - 1):
+    if (y[i] < 1 and y[i + 1] > 1) or (y[i] > 1 and y[i + 1] < 1):
+        puntos_de_corte.append(eps_values[i])
+    if (y[i] < -1 and y[i + 1] > -1) or (y[i] > -1 and y[i + 1] < -1):
+        puntos_de_corte.append(eps_values[i])
+
+# Gráfica 1: Función trascendental con bordes permitidos
+plt.figure(figsize=(8, 6))
+plt.plot(eps_values, y, label=r'$f(\epsilon)$', color='r')
+plt.axhline(y=1, color='b', linestyle='dashed')
+plt.axhline(y=-1, color='b', linestyle='dashed')
+for punto in puntos_de_corte:
+    plt.axvline(x=punto, color='g', linestyle='dashed')
+plt.xlabel(r'$\epsilon = E/V_0$')
+plt.ylabel(r'$f(\epsilon)$')
+plt.title('Modelo de Kronig-Penney')
+plt.legend()
+plt.grid()
+plt.show()
+
+# Gráfica 2: Bandas de energía (ε vs k / (π/(a + b))), reflejada sobre 0 a -1
+plt.figure(figsize=(8, 6))
+
+# Graficar ε vs k / (π/(a + b)) para los intervalos donde -1 ≤ f(ε) ≤ 1
+for i in range(0, len(puntos_de_corte) - 1, 2):
+    eps_band = np.linspace(puntos_de_corte[i], puntos_de_corte[i + 1], 100000)
+    y_band = np.array([funcion_trascendente(eps) for eps in eps_band])
+    
+    # Filtrar valores de y_band que estén dentro del rango [-1, 1]
+    valid_indices = np.where((y_band >= -1) & (y_band <= 1))
+    eps_band_valid = eps_band[valid_indices]
+    y_band_valid = y_band[valid_indices]
+    
+    if len(y_band_valid) > 0:
+        k_a_plus_b = np.arccos(y_band_valid)  # Despejamos k(a + b) usando la función inversa del coseno
+        k_normalized = k_a_plus_b / np.pi  # Normalizamos k(a + b) dividiendo por π
+
+        # Graficar ε vs k / (π/(a + b)) (parte positiva y negativa)
+        plt.plot(k_normalized, eps_band_valid, linewidth=2, label=f'Banda {i//2 + 1}')
+        plt.plot(-k_normalized, eps_band_valid, linewidth=2, color=plt.gca().lines[-1].get_color())
+
+        # Calcular la energía de la banda en MeV
+        energia_min = eps_band_valid.min() * V0
+        energia_max = eps_band_valid.max() * V0
+        print(f"Banda {i//2 + 1}: Energía mínima = {energia_min:.4f} MeV, Energía máxima = {energia_max:.4f} MeV")
+
+# Ajustar los límites del eje x entre -1 y 1
+plt.xlim(-1, 1)
+
+plt.xlabel(r'$k (a+b)$')
+plt.ylabel(r'$\epsilon$')
+plt.title(r'Bandas de Energía: $\epsilon$ vs $k (a+b))$')
+plt.legend()
+plt.grid()
+plt.show()
